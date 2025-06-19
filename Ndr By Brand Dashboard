@@ -1,0 +1,24 @@
+with base as (
+  select
+    brand,
+    date_trunc({{Aggregation}}, revenue_report_date) AS period,
+    sum(transaction_amount_usd) AS gmv
+  from
+    ob_analytics.production.omnichannel_sales_report
+  where
+    COUNTRY_CODE IN {{Country-Code}}
+    and BILLABLE = {{Billable}}  -- Apply boolean filter
+  group by
+    brand, period
+)
+
+select
+  b.*,
+  l.gmv AS LY_GMV
+from
+  base b
+left join
+  base l
+on
+  l.period + interval '1 year' = b.period  -- Keep your original join logic
+  and l.brand = b.brand
