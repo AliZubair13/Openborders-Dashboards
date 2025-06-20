@@ -1,0 +1,17 @@
+select
+  COUNTRY_CODE,
+  COALESCE(sum(TRANSACTION_AMOUNT_USD), 0) as TRANSACTION_AMOUNT_USD,
+  COALESCE(sum(INVOICED_DUTIES_AND_TAXES_USD), 0) as INVOICED_DUTIES_AND_TAXES_USD,
+  COALESCE(sum(TOTAL_DUTIES_AND_TAXES_USD), 0) as TOTAL_DUTIES_AND_TAXES_USD,
+  COALESCE(sum(TOTAL_DUTIES_AND_TAXES_USD), 0) - COALESCE(sum(INVOICED_DUTIES_AND_TAXES_USD), 0) as EXCESS_TAXES_AND_DUTIES
+from
+  ob_analytics.production.net_revenue_report
+where
+  BRAND in {{Brand}} and
+  COUNTRY_CODE in {{Country-Code}} and
+  BILLABLE = {{Billable}}  -- Apply boolean filter
+  AND REVENUE_REPORT_DATE BETWEEN COALESCE({{Date}}:"start"::timestamp,'2020-1-1') and COALESCE({{Date}}:"end"::timestamp,current_timestamp)
+group by
+  COUNTRY_CODE
+order by
+  COUNTRY_CODE
