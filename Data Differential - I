@@ -1,0 +1,140 @@
+-- Orders Core
+WITH orders_core AS (
+    SELECT
+        s.environment,
+        s.total_orders AS "Total Orders",
+        p.total_orders AS "Prod Total Orders",
+        s.total_orders - p.total_orders AS "Diff Total Orders",
+        s.total_charged_usd AS "Total Charged USD",
+        p.total_charged_usd AS "Prod Total Charged USD",
+        s.total_charged_usd - p.total_charged_usd AS "Diff Total Charged USD",
+        s.duties_and_taxes_usd AS "Duties & Taxes USD",
+        p.duties_and_taxes_usd AS "Prod Duties & Taxes USD",
+        s.duties_and_taxes_usd - p.duties_and_taxes_usd AS "Diff Duties & Taxes USD",
+        s.client_shipping_cost_usd AS "Client Shipping USD",
+        p.client_shipping_cost_usd AS "Prod Client Shipping USD",
+        s.client_shipping_cost_usd - p.client_shipping_cost_usd AS "Diff Client Shipping USD",
+        s.client_platform_cost_usd AS "Client Platform USD",
+        p.client_platform_cost_usd AS "Prod Client Platform USD",
+        s.client_platform_cost_usd - p.client_platform_cost_usd AS "Diff Client Platform USD"
+    FROM (
+        SELECT 'LSALUNGA' AS environment, COUNT(*) AS total_orders, SUM(total_charged_usd) AS total_charged_usd,
+               SUM(duties_and_taxes_usd) AS duties_and_taxes_usd, SUM(client_shipping_cost_usd) AS client_shipping_cost_usd,
+               SUM(client_platform_cost_usd) AS client_platform_cost_usd
+        FROM OB_ANALYTICS.DBT_LSALUNGA.ORDERS_CORE
+        UNION ALL
+        SELECT 'PXUE', COUNT(*), SUM(total_charged_usd), SUM(duties_and_taxes_usd), SUM(client_shipping_cost_usd),
+               SUM(client_platform_cost_usd)
+        FROM OB_ANALYTICS.DBT_PXUE.ORDERS_CORE
+        UNION ALL
+        SELECT 'LVIERNES', COUNT(*), SUM(total_charged_usd), SUM(duties_and_taxes_usd), SUM(client_shipping_cost_usd),
+               SUM(client_platform_cost_usd)
+        FROM OB_ANALYTICS.DBT_LVIERNES.ORDERS_CORE
+    ) s
+    CROSS JOIN (
+        SELECT COUNT(*) AS total_orders, SUM(total_charged_usd) AS total_charged_usd,
+               SUM(duties_and_taxes_usd) AS duties_and_taxes_usd, SUM(client_shipping_cost_usd) AS client_shipping_cost_usd,
+               SUM(client_platform_cost_usd) AS client_platform_cost_usd
+        FROM OB_ANALYTICS.PRODUCTION.ORDERS_CORE
+    ) p
+),
+
+-- Net Revenue
+net_revenue AS (
+    SELECT
+        s.environment,
+        s.total_orders AS "Total Orders",
+        p.total_orders AS "Prod Total Orders",
+        s.total_orders - p.total_orders AS "Diff Total Orders",
+        s.transaction_amount_usd AS "Transaction Amount USD",
+        p.transaction_amount_usd AS "Prod Transaction Amount USD",
+        s.transaction_amount_usd - p.transaction_amount_usd AS "Diff Transaction Amount USD",
+        s.total_duties_and_taxes_usd AS "Duties & Taxes USD",
+        p.total_duties_and_taxes_usd AS "Prod Duties & Taxes USD",
+        s.total_duties_and_taxes_usd - p.total_duties_and_taxes_usd AS "Diff Duties & Taxes USD",
+        s.shipping_fee_usd AS "Shipping Fee USD",
+        p.shipping_fee_usd AS "Prod Shipping Fee USD",
+        s.shipping_fee_usd - p.shipping_fee_usd AS "Diff Shipping Fee USD",
+        s.platform_fee_usd AS "Platform Fee USD",
+        p.platform_fee_usd AS "Prod Platform Fee USD",
+        s.platform_fee_usd - p.platform_fee_usd AS "Diff Platform Fee USD"
+    FROM (
+        SELECT 'LSALUNGA', COUNT(*), SUM(transaction_amount_usd), SUM(total_duties_and_taxes_usd), 
+               SUM(shipping_fee_usd), SUM(platform_fee_usd)
+        FROM OB_ANALYTICS.DBT_LSALUNGA.NET_REVENUE_REPORT
+        UNION ALL
+        SELECT 'PXUE', COUNT(*), SUM(transaction_amount_usd), SUM(total_duties_and_taxes_usd), 
+               SUM(shipping_fee_usd), SUM(platform_fee_usd)
+        FROM OB_ANALYTICS.DBT_PXUE.NET_REVENUE_REPORT
+        UNION ALL
+        SELECT 'LVIERNES', COUNT(*), SUM(transaction_amount_usd), SUM(total_duties_and_taxes_usd), 
+               SUM(shipping_fee_usd), SUM(platform_fee_usd)
+        FROM OB_ANALYTICS.DBT_LVIERNES.NET_REVENUE_REPORT
+    ) s(environment,total_orders,transaction_amount_usd,total_duties_and_taxes_usd,shipping_fee_usd,platform_fee_usd)
+    CROSS JOIN (
+        SELECT COUNT(*) AS total_orders, SUM(transaction_amount_usd) AS transaction_amount_usd,
+               SUM(total_duties_and_taxes_usd) AS total_duties_and_taxes_usd, SUM(shipping_fee_usd) AS shipping_fee_usd,
+               SUM(platform_fee_usd) AS platform_fee_usd
+        FROM OB_ANALYTICS.PRODUCTION.NET_REVENUE_REPORT
+    ) p
+),
+
+-- Billing Report
+billing_report AS (
+    SELECT
+        s.environment,
+        s.total_orders AS "Total Orders",
+        p.total_orders AS "Prod Total Orders",
+        s.total_orders - p.total_orders AS "Diff Total Orders",
+        s.transaction_amount_usd AS "Transaction Amount USD",
+        p.transaction_amount_usd AS "Prod Transaction Amount USD",
+        s.transaction_amount_usd - p.transaction_amount_usd AS "Diff Transaction Amount USD",
+        s.customer_duties_and_taxes_usd AS "Customer Duties & Taxes USD",
+        p.customer_duties_and_taxes_usd AS "Prod Customer Duties & Taxes USD",
+        s.customer_duties_and_taxes_usd - p.customer_duties_and_taxes_usd AS "Diff Customer Duties & Taxes USD",
+        s.customer_shipping_cost_usd AS "Customer Shipping USD",
+        p.customer_shipping_cost_usd AS "Prod Customer Shipping USD",
+        s.customer_shipping_cost_usd - p.customer_shipping_cost_usd AS "Diff Customer Shipping USD",
+        s.platform_fee_usd AS "Platform Fee USD",
+        p.platform_fee_usd AS "Prod Platform Fee USD",
+        s.platform_fee_usd - p.platform_fee_usd AS "Diff Platform Fee USD"
+    FROM (
+        SELECT 'LSALUNGA', COUNT(*), SUM(transaction_amount_usd), SUM(customer_duties_and_taxes_usd), 
+               SUM(customer_shipping_cost_usd), SUM(platform_fee_usd)
+        FROM OB_ANALYTICS.DBT_LSALUNGA.BILLING_REPORT
+        UNION ALL
+        SELECT 'PXUE', COUNT(*), SUM(transaction_amount_usd), SUM(customer_duties_and_taxes_usd), 
+               SUM(customer_shipping_cost_usd), SUM(platform_fee_usd)
+        FROM OB_ANALYTICS.DBT_PXUE.BILLING_REPORT
+        UNION ALL
+        SELECT 'LVIERNES', COUNT(*), SUM(transaction_amount_usd), SUM(customer_duties_and_taxes_usd), 
+               SUM(customer_shipping_cost_usd), SUM(platform_fee_usd)
+        FROM OB_ANALYTICS.DBT_LVIERNES.BILLING_REPORT
+    ) s(environment,total_orders,transaction_amount_usd,customer_duties_and_taxes_usd,customer_shipping_cost_usd,platform_fee_usd)
+    CROSS JOIN (
+        SELECT COUNT(*) AS total_orders, SUM(transaction_amount_usd) AS transaction_amount_usd,
+               SUM(customer_duties_and_taxes_usd) AS customer_duties_and_taxes_usd,
+               SUM(customer_shipping_cost_usd) AS customer_shipping_cost_usd,
+               SUM(platform_fee_usd) AS platform_fee_usd
+        FROM OB_ANALYTICS.PRODUCTION.BILLING_REPORT
+    ) p
+)
+
+-- Select based on control
+SELECT *
+FROM orders_core
+WHERE {{New-Control-1}} = 'Orders Core'
+
+UNION ALL
+
+SELECT *
+FROM net_revenue
+WHERE {{New-Control-1}} = 'Net Revenue'
+
+UNION ALL
+
+SELECT *
+FROM billing_report
+WHERE {{New-Control-1}} = 'Billing Report'
+
+ORDER BY environment;
