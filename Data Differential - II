@@ -1,0 +1,253 @@
+-- One-table output: Discrepancy Type | Oms Order Number | Prod Value | Staging Value | Notes
+WITH
+/* =======================
+   PRODUCTION DATA
+   ======================= */
+production_data AS (
+    -- Net Revenue
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        total_duties_and_taxes_usd        AS col2,
+        shipping_fee_usd                  AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.PRODUCTION.NET_REVENUE_REPORT
+    WHERE {{ New-Control-2 }} = 'Net Revenue'
+
+    UNION ALL
+    -- Orders Core
+    SELECT
+        oms_order_number,
+        total_charged_usd                 AS col1,
+        duties_and_taxes_usd              AS col2,
+        client_shipping_cost_usd          AS col3,
+        client_platform_cost_usd          AS col4
+    FROM OB_ANALYTICS.PRODUCTION.ORDERS_CORE
+    WHERE {{ New-Control-2 }} = 'Orders Core'
+
+    UNION ALL
+    -- Billing Report
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        customer_duties_and_taxes_usd     AS col2,
+        customer_shipping_cost_usd        AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.PRODUCTION.BILLING_REPORT
+    WHERE {{ New-Control-2 }} = 'Billing Report'
+),
+
+/* =======================
+   STAGING DATA (schema by {{ New-Control }})
+   ======================= */
+staging_data AS (
+    -- Net Revenue
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        total_duties_and_taxes_usd        AS col2,
+        shipping_fee_usd                  AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.DBT_PXUE.NET_REVENUE_REPORT
+    WHERE {{ New-Control }} = 'Paul' AND {{ New-Control-2 }} = 'Net Revenue'
+    UNION ALL
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        total_duties_and_taxes_usd        AS col2,
+        shipping_fee_usd                  AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.DBT_LSALUNGA.NET_REVENUE_REPORT
+    WHERE {{ New-Control }} = 'Leslie' AND {{ New-Control-2 }} = 'Net Revenue'
+    UNION ALL
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        total_duties_and_taxes_usd        AS col2,
+        shipping_fee_usd                  AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.DBT_LVIERNES.NET_REVENUE_REPORT
+    WHERE {{ New-Control }} = 'Lea' AND {{ New-Control-2 }} = 'Net Revenue'
+
+    UNION ALL
+    -- Orders Core
+    SELECT
+        oms_order_number,
+        total_charged_usd                 AS col1,
+        duties_and_taxes_usd              AS col2,
+        client_shipping_cost_usd          AS col3,
+        client_platform_cost_usd          AS col4
+    FROM OB_ANALYTICS.DBT_PXUE.ORDERS_CORE
+    WHERE {{ New-Control }} = 'Paul' AND {{ New-Control-2 }} = 'Orders Core'
+    UNION ALL
+    SELECT
+        oms_order_number,
+        total_charged_usd                 AS col1,
+        duties_and_taxes_usd              AS col2,
+        client_shipping_cost_usd          AS col3,
+        client_platform_cost_usd          AS col4
+    FROM OB_ANALYTICS.DBT_LSALUNGA.ORDERS_CORE
+    WHERE {{ New-Control }} = 'Leslie' AND {{ New-Control-2 }} = 'Orders Core'
+    UNION ALL
+    SELECT
+        oms_order_number,
+        total_charged_usd                 AS col1,
+        duties_and_taxes_usd              AS col2,
+        client_shipping_cost_usd          AS col3,
+        client_platform_cost_usd          AS col4
+    FROM OB_ANALYTICS.DBT_LVIERNES.ORDERS_CORE
+    WHERE {{ New-Control }} = 'Lea' AND {{ New-Control-2 }} = 'Orders Core'
+
+    UNION ALL
+    -- Billing Report
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        customer_duties_and_taxes_usd     AS col2,
+        customer_shipping_cost_usd        AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.DBT_PXUE.BILLING_REPORT
+    WHERE {{ New-Control }} = 'Paul' AND {{ New-Control-2 }} = 'Billing Report'
+    UNION ALL
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        customer_duties_and_taxes_usd     AS col2,
+        customer_shipping_cost_usd        AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.DBT_LSALUNGA.BILLING_REPORT
+    WHERE {{ New-Control }} = 'Leslie' AND {{ New-Control-2 }} = 'Billing Report'
+    UNION ALL
+    SELECT
+        oms_order_number,
+        transaction_amount_usd            AS col1,
+        customer_duties_and_taxes_usd     AS col2,
+        customer_shipping_cost_usd        AS col3,
+        platform_fee_usd                  AS col4
+    FROM OB_ANALYTICS.DBT_LVIERNES.BILLING_REPORT
+    WHERE {{ New-Control }} = 'Lea' AND {{ New-Control-2 }} = 'Billing Report'
+),
+
+/* =======================
+   LABEL HELPERS (pretty names per report/column)
+   ======================= */
+labels AS (
+  SELECT
+    {{ New-Control-2 }} AS report_type,
+    /* col1 name */
+    CASE {{ New-Control-2 }}
+      WHEN 'Net Revenue'   THEN 'TRANSACTION_AMOUNT_USD'
+      WHEN 'Orders Core'   THEN 'TOTAL_CHARGED_USD'
+      WHEN 'Billing Report'THEN 'TRANSACTION_AMOUNT_USD'
+    END AS col1_name,
+    /* col2 name */
+    CASE {{ New-Control-2 }}
+      WHEN 'Net Revenue'   THEN 'TOTAL_DUTIES_AND_TAXES_USD'
+      WHEN 'Orders Core'   THEN 'DUTIES_AND_TAXES_USD'
+      WHEN 'Billing Report'THEN 'CUSTOMER_DUTIES_AND_TAXES_USD'
+    END AS col2_name,
+    /* col3 name */
+    CASE {{ New-Control-2 }}
+      WHEN 'Net Revenue'   THEN 'SHIPPING_FEE_USD'
+      WHEN 'Orders Core'   THEN 'CLIENT_SHIPPING_COST_USD'
+      WHEN 'Billing Report'THEN 'CUSTOMER_SHIPPING_COST_USD'
+    END AS col3_name,
+    /* col4 name */
+    CASE {{ New-Control-2 }}
+      WHEN 'Net Revenue'   THEN 'PLATFORM_FEE_USD'
+      WHEN 'Orders Core'   THEN 'CLIENT_PLATFORM_COST_USD'
+      WHEN 'Billing Report'THEN 'PLATFORM_FEE_USD'
+    END AS col4_name
+),
+
+/* =======================
+   ROW-BASED COMPARISON
+   ======================= */
+mismatch_col1 AS (
+  SELECT
+    l.col1_name || ' Mismatch'         AS discrepancy_type,
+    prod.oms_order_number,
+    prod.col1                           AS prod_value,
+    stag.col1                           AS staging_value,
+    'Values differ between production and staging' AS notes
+  FROM production_data prod
+  JOIN staging_data   stag USING (oms_order_number)
+  CROSS JOIN labels l
+  WHERE (prod.col1 IS NULL AND stag.col1 IS NOT NULL)
+     OR (prod.col1 IS NOT NULL AND stag.col1 IS NULL)
+     OR (prod.col1 <> stag.col1)
+),
+mismatch_col2 AS (
+  SELECT
+    l.col2_name || ' Mismatch', prod.oms_order_number, prod.col2, stag.col2,
+    'Values differ between production and staging'
+  FROM production_data prod
+  JOIN staging_data   stag USING (oms_order_number)
+  CROSS JOIN labels l
+  WHERE (prod.col2 IS NULL AND stag.col2 IS NOT NULL)
+     OR (prod.col2 IS NOT NULL AND stag.col2 IS NULL)
+     OR (prod.col2 <> stag.col2)
+),
+mismatch_col3 AS (
+  SELECT
+    l.col3_name || ' Mismatch', prod.oms_order_number, prod.col3, stag.col3,
+    'Values differ between production and staging'
+  FROM production_data prod
+  JOIN staging_data   stag USING (oms_order_number)
+  CROSS JOIN labels l
+  WHERE (prod.col3 IS NULL AND stag.col3 IS NOT NULL)
+     OR (prod.col3 IS NOT NULL AND stag.col3 IS NULL)
+     OR (prod.col3 <> stag.col3)
+),
+mismatch_col4 AS (
+  SELECT
+    l.col4_name || ' Mismatch', prod.oms_order_number, prod.col4, stag.col4,
+    'Values differ between production and staging'
+  FROM production_data prod
+  JOIN staging_data   stag USING (oms_order_number)
+  CROSS JOIN labels l
+  WHERE (prod.col4 IS NULL AND stag.col4 IS NOT NULL)
+     OR (prod.col4 IS NOT NULL AND stag.col4 IS NULL)
+     OR (prod.col4 <> stag.col4)
+),
+missing_in_staging AS (
+  SELECT
+    'Missing in Staging'                AS discrepancy_type,
+    prod.oms_order_number,
+    prod.col1                           AS prod_value,
+    CAST(NULL AS NUMBER)                AS staging_value,
+    'Record exists in production but not in staging' AS notes
+  FROM production_data prod
+  LEFT JOIN staging_data stag USING (oms_order_number)
+  WHERE stag.oms_order_number IS NULL
+),
+missing_in_production AS (
+  SELECT
+    'Missing in Production'             AS discrepancy_type,
+    stag.oms_order_number,
+    CAST(NULL AS NUMBER)                AS prod_value,
+    stag.col1                           AS staging_value,
+    'Record exists in staging but not in production' AS notes
+  FROM staging_data stag
+  LEFT JOIN production_data prod USING (oms_order_number)
+  WHERE prod.oms_order_number IS NULL
+)
+
+SELECT
+  discrepancy_type      AS "Discrepancy Type",
+  oms_order_number      AS "Oms Order Number",
+  prod_value            AS "Prod Value",
+  staging_value         AS "Staging Value",
+  notes                 AS "Notes"
+FROM mismatch_col1
+UNION ALL
+SELECT * FROM mismatch_col2
+UNION ALL
+SELECT * FROM mismatch_col3
+UNION ALL
+SELECT * FROM mismatch_col4
+UNION ALL
+SELECT * FROM missing_in_staging
+UNION ALL
+SELECT * FROM missing_in_production
+ORDER BY 1, 2;
