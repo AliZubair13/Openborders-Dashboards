@@ -85,3 +85,133 @@ It is useful for finance, compliance, and operations teams to reconcile revenue 
 
 <img width="1325" height="553" alt="image" src="https://github.com/user-attachments/assets/14c776a9-74d7-4d6e-8080-2227443902c1" />
 
+#3. Data Differential - I
+📊 Query Explanation
+
+This SQL script compares data across different environments (LSALUNGA, PXUE, LVIERNES) against the Production environment for three different reports:
+
+📦 Orders Core
+
+💰 Net Revenue
+
+🧾 Billing Report
+
+It shows both the values and the differences between each environment and Production.
+
+🔎 Step-by-Step
+
+📦 Orders Core (orders_core CTE)
+
+Pulls order-related metrics (total orders, charged amount, duties & taxes, shipping, platform costs) from each environment’s ORDERS_CORE table.
+
+Cross joins with the same metrics from Production.
+
+Calculates differences (e.g., "Diff Total Orders", "Diff Charged USD").
+
+💰 Net Revenue (net_revenue CTE)
+
+Pulls revenue-related metrics (transaction amount, duties & taxes, shipping fee, platform fee) from each environment’s NET_REVENUE_REPORT table.
+
+Cross joins with Production NET_REVENUE_REPORT.
+
+Calculates differences (e.g., "Diff Transaction Amount USD", "Diff Duties & Taxes USD").
+
+🧾 Billing Report (billing_report CTE)
+
+Pulls billing-related metrics (transaction amount, customer duties & taxes, customer shipping cost, platform fee) from each environment’s BILLING_REPORT table.
+
+Cross joins with Production BILLING_REPORT.
+
+Calculates differences (e.g., "Diff Customer Duties & Taxes USD", "Diff Customer Shipping USD").
+
+🎛️ Control Switch
+
+At the end, the query uses a control parameter {{New-Control-1}} to decide which dataset to return:
+
+If {{New-Control-1}} = 'Orders Core' → returns 📦 Orders Core results.
+
+If {{New-Control-1}} = 'Net Revenue' → returns 💰 Net Revenue results.
+
+If {{New-Control-1}} = 'Billing Report' → returns 🧾 Billing Report results.
+
+📌 Output
+
+Environment (LSALUNGA, PXUE, LVIERNES) vs. Production
+
+Each metric (orders, revenue, billing fields)
+
+The difference between environment values and Production values
+
+Results sorted by environment
+
+🎯 Purpose
+
+This query is designed to:
+
+✅ Validate that staging/test environments match Production data.
+
+📉 Highlight differences across orders, revenue, and billing.
+
+🔍 Help analysts quickly identify inconsistencies between environments.
+
+<img width="1126" height="281" alt="image" src="https://github.com/user-attachments/assets/d3b2c4ee-48a7-4012-ae9d-77a460c9311f" />
+
+# 4. Data Differential - II
+🔍 Query Explanation – One Table Discrepancy Report
+
+This SQL script compares Production vs Staging records for three reports:
+
+📦 Orders Core
+
+💰 Net Revenue
+
+🧾 Billing Report
+
+The goal is to detect mismatches or missing records between environments and output them in one unified table with clear labels.
+
+🏗️ How It Works
+
+📊 Production Data (CTE: production_data)
+
+Pulls selected columns (col1 – col4) from Production tables depending on the report type (Net Revenue, Orders Core, or Billing Report).
+
+🧪 Staging Data (CTE: staging_data)
+
+Pulls the same set of columns (col1 – col4) from Staging schemas (PXUE, LSALUNGA, LVIERNES) based on who owns the pipeline (Paul, Leslie, Lea) and the report type.
+
+🏷️ Labels (CTE: labels)
+
+Assigns pretty column names to col1 – col4 depending on which report type is selected (so the output looks readable).
+
+⚖️ Row-Based Comparison (mismatch checks)
+
+mismatch_col1 … mismatch_col4: Compares Production value vs. Staging value column by column.
+
+Flags if values are:
+
+❌ Different
+
+⚠️ Missing in one environment
+
+🚨 Missing Records
+
+missing_in_staging: Row exists in Production but not in Staging.
+
+missing_in_production: Row exists in Staging but not in Production.
+
+📋 Final Output
+A single table with the following columns:
+
+🏷️ Discrepancy Type (which field mismatched or if missing)
+
+🔑 Oms Order Number
+
+🏭 Prod Value (Production side)
+
+🧪 Staging Value (Staging side)
+
+📝 Notes (explanation of mismatch/missing record)
+<img width="1088" height="509" alt="image" src="https://github.com/user-attachments/assets/a7dd9aa5-7e8b-4eb4-be26-182288153731" />
+
+
+
