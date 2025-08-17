@@ -40,8 +40,7 @@ Gmv – Total current revenue for the brand.
 Ly Gmv – Revenue from the same period one year prior.
 
 This table is particularly useful for validating the trends observed in the NDR table and offers additional support when diagnosing why NDR percentages rise or fall.
-![Screenshot 2025-06-19 195815](https://github.com/user-attachments/assets/38ab81cc-22a4-4f5b-984e-f71b7f4af553)
-![Screenshot 2025-06-19 195743](https://github.com/user-attachments/assets/1198dd49-b156-465f-bd9d-5fe10302db99)
+
 
 # 2. Client's Revenue ETD Overview
 📄 Query Explanation
@@ -83,7 +82,6 @@ Grouping & Sorting
 This query helps identify over- or under-collected taxes and duties per country.
 It is useful for finance, compliance, and operations teams to reconcile revenue and tax reports across brands and regions.
 
-<img width="1325" height="553" alt="image" src="https://github.com/user-attachments/assets/14c776a9-74d7-4d6e-8080-2227443902c1" />
 
 #3. Data Differential - I
 📊 Query Explanation
@@ -154,7 +152,6 @@ This query is designed to:
 
 🔍 Help analysts quickly identify inconsistencies between environments.
 
-<img width="1126" height="281" alt="image" src="https://github.com/user-attachments/assets/d3b2c4ee-48a7-4012-ae9d-77a460c9311f" />
 
 # 4. Data Differential - II
 🔍 Query Explanation – One Table Discrepancy Report
@@ -211,7 +208,6 @@ A single table with the following columns:
 🧪 Staging Value (Staging side)
 
 📝 Notes (explanation of mismatch/missing record)
-<img width="1088" height="509" alt="image" src="https://github.com/user-attachments/assets/a7dd9aa5-7e8b-4eb4-be26-182288153731" />
 
 
 
